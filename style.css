@@ -616,3 +616,112 @@ padding: 25px 20px;
 
 
 }
+/* =========================
+WELCOME PAGE
+========================= */
+
+.welcome-page {
+min-height: 100vh;
+background: #075e54;
+display: flex;
+align-items: center;
+justify-content: center;
+padding: 20px;
+}
+
+
+.welcome-container {
+width: 100%;
+max-width: 500px;
+background: white;
+padding: 50px 30px;
+border-radius: 20px;
+text-align: center;
+box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+}
+
+
+.welcome-logo {
+width: 90px;
+height: 90px;
+margin: 0 auto 25px;
+border-radius: 50%;
+background: #128c7e;
+color: white;
+display: flex;
+align-items: center;
+justify-content: center;
+font-size: 45px;
+}
+
+
+.welcome-container h1 {
+color: #075e54;
+font-size: 30px;
+margin-bottom: 15px;
+}
+
+
+.welcome-container p {
+color: #667781;
+font-size: 16px;
+line-height: 1.6;
+margin-bottom: 30px;
+}
+
+
+.welcome-buttons {
+display: flex;
+flex-direction: column;
+gap: 12px;
+}
+
+
+.welcome-button {
+display: block;
+width: 100%;
+padding: 15px;
+border-radius: 8px;
+text-decoration: none;
+font-size: 16px;
+font-weight: bold;
+text-align: center;
+}
+
+
+.welcome-button.primary {
+background: #128c7e;
+color: white;
+}
+
+
+.welcome-button.primary:hover {
+background: #075e54;
+}
+
+
+.welcome-button.secondary {
+background: white;
+color: #075e54;
+border: 2px solid #128c7e;
+}
+
+
+.welcome-button.secondary:hover {
+background: #e8f5f3;
+}
+
+
+@media (max-width: 500px) {
+
+.welcome-container {
+padding: 40px 20px;
+}
+
+
+.welcome-container h1 {
+font-size: 25px;
+}
+
+}
+
