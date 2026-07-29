@@ -1,114 +1,248 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<meta name="theme-color" content="#075e54">
-<meta name="description" content="A simple modern messaging application">
+<meta
+name="viewport"
+content="width=device-width, initial-scale=1.0"
+>
 
-<title>Our Chat App</title>
+<meta
+name="theme-color"
+content="#075e54"
+>
 
-<link rel="stylesheet" href="style.css">
-<link rel="manifest" href="manifest.json">
+<meta
+name="description"
+content="Kollins Chat - Connect and message people"
+>
+
+<title>Kollins Chat</title>
+
+<link
+rel="stylesheet"
+href="style.css"
+>
+
+<link
+rel="manifest"
+href="manifest.json"
+>
 </head>
+
 
 <body>
 
 <div class="app">
 
+
 <!-- Sidebar -->
+
 <aside class="sidebar">
 
-<header class="sidebar-header">
-<h1>Chats</h1>
 
-<button id="newChatBtn" class="icon-btn" title="New Chat">
+<header class="sidebar-header">
+
+
+<div class="my-profile">
+
+<div class="avatar">
+K
+</div>
+
+
+<div>
+
+<h2 id="myUsername">
+@kollins
+</h2>
+
+<p>
+Online
+</p>
+
+</div>
+
+</div>
+
+
+<button
+id="newChatBtn"
+class="icon-btn"
+>
 +
 </button>
+
+
 </header>
 
+
 <!-- Search -->
+
 <div class="search-box">
+
 <input
 type="text"
 id="searchInput"
 placeholder="Search chats..."
 >
+
 </div>
 
+
 <!-- Chat List -->
-<div id="chatList" class="chat-list">
+
+<div
+id="chatList"
+class="chat-list"
+>
+
 
 <div
 class="chat-item active"
-data-name="Demo User"
-data-username="@demo"
+data-name="Welcome"
 >
-<div class="avatar">D</div>
+
+
+<div class="avatar">
+W
+</div>
+
 
 <div class="chat-info">
+
+
 <div class="chat-top">
-<strong>Demo User</strong>
-<span>10:30</span>
+
+<strong>
+Welcome
+</strong>
+
+<span>
+Now
+</span>
+
 </div>
 
-<p>Welcome to Our Chat App!</p>
-</div>
-</div>
+
+<p>
+Welcome to Kollins Chat!
+</p>
+
 
 </div>
+
+
+</div>
+
+
+</div>
+
 
 </aside>
 
 
-<!-- Main Chat Area -->
+<!-- Chat Area -->
+
 <main class="chat-area">
 
-<!-- Chat Header -->
+
 <header class="chat-header">
+
 
 <div class="user-details">
 
-<div class="avatar">D</div>
+
+<div class="avatar">
+W
+</div>
+
 
 <div>
-<h2 id="chatUserName">Demo User</h2>
-<p id="chatUserStatus">Online</p>
-</div>
+
+
+<h2 id="chatUserName">
+Welcome
+</h2>
+
+
+<p id="chatUserStatus">
+Online
+</p>
+
 
 </div>
+
+
+</div>
+
 
 <div class="chat-actions">
-<button class="icon-btn" title="Search">⌕</button>
-<button class="icon-btn" title="More">⋮</button>
+
+
+<button class="icon-btn">
+⌕
+</button>
+
+
+<button class="icon-btn">
+⋮
+</button>
+
+
 </div>
+
 
 </header>
 
 
 <!-- Messages -->
-<section id="messages" class="messages">
 
-<div class="message received">
-<p>Hello! 👋</p>
-<span>10:29</span>
+<section
+id="messages"
+class="messages"
+>
+
+
+<div class="welcome-screen">
+
+
+<div class="welcome-icon">
+💬
 </div>
 
-<div class="message received">
-<p>Welcome to Our Chat App!</p>
-<span>10:30</span>
+
+<h1>
+Welcome to Kollins Chat
+</h1>
+
+
+<p>
+Find people, connect with friends,
+and start chatting.
+</p>
+
+
 </div>
+
 
 </section>
 
 
 <!-- Message Input -->
+
 <footer class="message-input-area">
 
-<button id="emojiBtn" class="input-btn">
+
+<button
+id="emojiBtn"
+class="input-btn"
+>
 😊
 </button>
+
 
 <input
 type="text"
@@ -117,48 +251,81 @@ placeholder="Type a message..."
 autocomplete="off"
 >
 
-<button id="sendBtn" class="send-btn">
+
+<button
+id="sendBtn"
+class="send-btn"
+>
 ➤
 </button>
 
+
 </footer>
 
+
 </main>
+
 
 </div>
 
 
 <!-- New Chat Modal -->
-<div id="newChatModal" class="modal hidden">
+
+<div
+id="newChatModal"
+class="modal hidden"
+>
+
 
 <div class="modal-content">
 
-<button id="closeModalBtn" class="close-btn">
+
+<button
+id="closeModalBtn"
+class="close-btn"
+>
 ×
 </button>
 
-<h2>Start a New Chat</h2>
 
-<p>Enter a username to find a user.</p>
+<h2>
+Find a User
+</h2>
+
+
+<p>
+Search using a username or phone number.
+</p>
+
 
 <input
 type="text"
 id="usernameInput"
-placeholder="@username"
+placeholder="@username or phone number"
 >
 
-<button id="startChatBtn" class="primary-btn">
-Find User
+
+<button
+id="startChatBtn"
+class="primary-btn"
+>
+Search
 </button>
 
-<p id="userResult" class="user-result"></p>
+
+<p id="userResult"></p>
+
 
 </div>
+
 
 </div>
 
 
 <script src="script.js"></script>
 
+
 </body>
+
 </html>
+
