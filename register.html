@@ -1,186 +1,146 @@
-<!DOCTYPE html>
-<html lang="en">
-
-<head>
-
-<meta charset="UTF-8">
-
-<meta
-name="viewport"
-content="width=device-width, initial-scale=1.0"
->
-
-<meta
-name="theme-color"
-content="#075e54"
->
-
-<title>
-Create Account - Kollins Chat
-</title>
-
-<link
-rel="stylesheet"
-href="style.css"
->
-
-</head>
-
-
-<body class="auth-page">
-
-
-<div class="auth-container">
-
-
-<!-- Logo -->
-
-<div class="auth-logo">
-💬
-</div>
-
-
-<!-- Title -->
-
-<h1>
-Create Your Account
-</h1>
-
-
-<p class="auth-subtitle">
-Join Kollins Chat and connect with people
-</p>
-
-
-<!-- Registration Form -->
-
-<form id="registerForm">
-
-
-<!-- Full Name -->
-
-<label>
-Full Name
-</label>
-
-
-<input
-type="text"
-id="fullName"
-placeholder="Enter your full name"
-required
->
-
-
-<!-- Username -->
-
-<label>
-Username
-</label>
-
-
-<input
-type="text"
-id="username"
-placeholder="@username"
-required
->
-
-
-<!-- Phone Number -->
-
-<label>
-Phone Number
-</label>
-
-
-<input
-type="tel"
-id="phoneNumber"
-placeholder="Enter your phone number"
-required
->
-
-
-<!-- Password -->
-
-<label>
-Password
-</label>
-
-
-<input
-type="password"
-id="registerPassword"
-placeholder="Create a password"
-required
->
-
-
-<!-- Confirm Password -->
-
-<label>
-Confirm Password
-</label>
-
-
-<input
-type="password"
-id="confirmPassword"
-placeholder="Confirm your password"
-required
->
-
-
-<!-- Create Account Button -->
-
-<button
-type="submit"
-class="auth-button"
->
-Create Account
-</button>
-
-
-</form>
-
-
-<!-- Registration Message -->
-
-<p
-id="registerMessage"
-class="auth-message"
-></p>
-
-
-<!-- Divider -->
-
-<div class="auth-divider">
-OR
-</div>
-
-
-<!-- Login Link -->
-
-<p class="auth-switch">
-
-Already have an account?
-
-<a href="login.html">
-Log In
-</a>
-
-</p>
-
-
-</div>
-
-
-<!-- JavaScript -->
-
-<script src="script.js"></script>
-
-
-</body>
-
-</html>
+```html
+1  <!DOCTYPE html>
+2  <html lang="en">
+3  
+4  <head>
+5  
+6  <meta charset="UTF-8">
+7  
+8  <meta
+9  name="viewport"
+10 content="width=device-width, initial-scale=1.0"
+11 >
+12  
+13 <meta
+14 name="theme-color"
+15 content="#075e54"
+16 >
+17  
+18 <title>
+19 Create Account - Kollins Chat
+20 </title>
+21  
+22 <link
+23 rel="stylesheet"
+24 href="style.css"
+25 >
+26  
+27 </head>
+28  
+29 <body class="auth-page">
+30  
+31 <div class="auth-container">
+32  
+33 <!-- Logo -->
+34  
+35 <div class="auth-logo">
+36 💬
+37 </div>
+38  
+39 <!-- Title -->
+40  
+41 <h1>
+42 Create Your Account
+43 </h1>
+44  
+45 <p class="auth-subtitle">
+46 Join Kollins Chat and connect with people
+47 </p>
+48  
+49 <!-- Registration Form -->
+50  
+51 <form
+52 id="registerForm"
+53 >
+54  
+55 <!-- Full Name -->
+56  
+57 <label
+58 for="fullName"
+59 >
+60 Full Name
+61 </label>
+62  
+63 <input
+64 type="text"
+65 id="fullName"
+66 placeholder="Enter your full name"
+67 required
+68 >
+69  
+70 <!-- Username -->
+71  
+72 <label
+73 for="username"
+74 >
+75 Username
+76 </label>
+77  
+78 <input
+79 type="text"
+80 id="username"
+81 placeholder="@username"
+82 required
+83 >
+84  
+85 <!-- Phone Number -->
+86  
+87 <label
+88 for="phoneNumber"
+89 >
+90 Phone Number
+91 </label>
+92  
+93 <input
+94 type="tel"
+95 id="phoneNumber"
+96 placeholder="Enter your phone number"
+97 required
+98 >
+99  
+100 <!-- Password -->
+101  
+102 <label
+103 for="password"
+104 >
+105 Password
+106 </label>
+107  
+108 <input
+109 type="password"
+110 id="password"
+111 placeholder="Create a password"
+112 required
+113 >
+114  
+115 <!-- Confirm Password -->
+116  
+117 <label
+118 for="confirmPassword"
+119 >
+120 Confirm Password
+121 </label>
+122  
+123 <input
+124 type="password"
+125 id="confirmPassword"
+126 placeholder="Confirm your password"
+127 required
+128 >
+129  
+130 <!-- Create Account Button -->
+131  
+132 <button
+133 type="submit"
+134 class="auth-button"
+135 >
+136 Create Account
+137 </button>
+138  
+139 </form>
+140  
+141 <!-- Registration Message -->
+142  
+143 <p
+144 id="registerMessage"
+145 class
