@@ -1,960 +1,756 @@
-// ==========================================
-// BACKEND CONNECTION
-// ==========================================
+const express = require("express");
 
-const API_URL =
-    "https://kollins-chat-backend.onrender.com";
+const cors = require("cors");
+
+const bcrypt = require("bcryptjs");
+
+const jwt = require("jsonwebtoken");
+
+const sqlite3 =
+    require("sqlite3")
+        .verbose();
+
+require("dotenv").config();
 
 
-// ==========================================
-// AUTHENTICATION HELPERS
-// ==========================================
+const app =
+    express();
 
-function getToken() {
 
-    return localStorage.getItem(
-        "kollinsToken"
+const PORT =
+    process.env.PORT ||
+    10000;
+
+
+const JWT_SECRET =
+    process.env.JWT_SECRET ||
+    "kollins-chat-secret";
+
+
+app.use(
+    cors({
+        origin: [
+            "https://kollins451.github.io"
+        ]
+    })
+);
+
+
+app.use(
+    express.json()
+);
+
+
+const db =
+    new sqlite3.Database(
+        "./kollins-chat.db"
     );
 
-}
+
+db.serialize(
+    function() {
+
+        db.run(`
+            CREATE TABLE IF NOT EXISTS users (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                fullName TEXT NOT NULL,
+                username TEXT UNIQUE NOT NULL,
+                phoneNumber TEXT UNIQUE NOT NULL,
+                password TEXT NOT NULL
+            )
+        `);
 
 
-function getCurrentUser() {
-
-    const user =
-        localStorage.getItem(
-            "kollinsUser"
-        );
-
-    return user
-        ? JSON.parse(user)
-        : null;
-
-}
+        db.run(`
+            CREATE TABLE IF NOT EXISTS contacts (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                userId INTEGER NOT NULL,
+                friendId INTEGER NOT NULL,
+                UNIQUE(userId, friendId)
+            )
+        `);
 
 
-function saveLoginData(data) {
+        db.run(`
+            CREATE TABLE IF NOT EXISTS messages (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                senderId INTEGER NOT NULL,
+                receiverId INTEGER NOT NULL,
+                message TEXT NOT NULL,
+                createdAt DATETIME DEFAULT CURRENT_TIMESTAMP
+            )
+        `);
 
-    localStorage.setItem(
-        "kollinsToken",
-        data.token
-    );
-
-    localStorage.setItem(
-        "kollinsUser",
-        JSON.stringify(data.user)
-    );
-
-}
+    }
+);
 
 
-// ==========================================
-// API REQUEST FUNCTION
-// ==========================================
+/* AUTH */
 
-async function apiRequest(
-    endpoint,
-    options = {}
+function authenticate(
+    request,
+    response,
+    next
 ) {
+
+    const header =
+        request.headers.authorization;
+
 
     const token =
-        getToken();
+        header &&
+        header.split(" ")[1];
 
 
-    const headers = {
+    if (!token) {
 
-        "Content-Type":
-            "application/json"
-
-    };
-
-
-    if (token) {
-
-        headers.Authorization =
-            `Bearer ${token}`;
+        return response
+            .status(401)
+            .json({
+                message:
+                    "Please log in."
+            });
 
     }
-
-
-    const response =
-        await fetch(
-            `${API_URL}${endpoint}`,
-            {
-                ...options,
-                headers
-            }
-        );
-
-
-    const data =
-        await response.json();
-
-
-    if (!response.ok) {
-
-        throw new Error(
-            data.message ||
-            "Something went wrong."
-        );
-
-    }
-
-
-    return data;
-
-}
-
-
-// ==========================================
-// REGISTER
-// ==========================================
-
-const registerForm =
-    document.getElementById(
-        "registerForm"
-    );
-
-
-if (registerForm) {
-
-    registerForm.addEventListener(
-        "submit",
-        async function(event) {
-
-            event.preventDefault();
-
-
-            const fullName =
-                document
-                    .getElementById(
-                        "fullName"
-                    )
-                    .value
-                    .trim();
-
-
-            const username =
-                document
-                    .getElementById(
-                        "username"
-                    )
-                    .value
-                    .trim();
-
-
-            const phoneNumber =
-                document
-                    .getElementById(
-                        "phoneNumber"
-                    )
-                    .value
-                    .trim();
-
-
-            const password =
-                document
-                    .getElementById(
-                        "password"
-                    )
-                    .value;
-
-
-            const confirmPassword =
-                document
-                    .getElementById(
-                        "confirmPassword"
-                    )
-                    .value;
-
-
-            const message =
-                document.getElementById(
-                    "registerMessage"
-                );
-
-
-            try {
-
-                if (
-                    password !==
-                    confirmPassword
-                ) {
-
-                    throw new Error(
-                        "Passwords do not match."
-                    );
-
-                }
-
-
-                message.textContent =
-                    "Creating your account...";
-
-
-                const data =
-                    await apiRequest(
-                        "/api/register",
-                        {
-
-                            method:
-                                "POST",
-
-                            body:
-                                JSON.stringify(
-                                    {
-                                        fullName,
-                                        username,
-                                        phoneNumber,
-                                        password
-                                    }
-                                )
-
-                        }
-                    );
-
-
-                saveLoginData(
-                    data
-                );
-
-
-                message.textContent =
-                    "Account created successfully!";
-
-
-                setTimeout(
-                    function() {
-
-                        window.location.href =
-                            "chat.html";
-
-                    },
-                    1000
-                );
-
-
-            } catch (error) {
-
-                message.textContent =
-                    error.message;
-
-            }
-
-        }
-    );
-
-}
-
-
-// ==========================================
-// LOGIN
-// ==========================================
-
-const loginForm =
-    document.getElementById(
-        "loginForm"
-    );
-
-
-if (loginForm) {
-
-    loginForm.addEventListener(
-        "submit",
-        async function(event) {
-
-            event.preventDefault();
-
-
-            const identifier =
-                document
-                    .getElementById(
-                        "identifier"
-                    )
-                    .value
-                    .trim();
-
-
-            const password =
-                document
-                    .getElementById(
-                        "password"
-                    )
-                    .value;
-
-
-            const message =
-                document.getElementById(
-                    "loginMessage"
-                );
-
-
-            try {
-
-                message.textContent =
-                    "Logging in...";
-
-
-                const data =
-                    await apiRequest(
-                        "/api/login",
-                        {
-
-                            method:
-                                "POST",
-
-                            body:
-                                JSON.stringify(
-                                    {
-                                        identifier,
-                                        password
-                                    }
-                                )
-
-                        }
-                    );
-
-
-                saveLoginData(
-                    data
-                );
-
-
-                message.textContent =
-                    "Login successful!";
-
-
-                setTimeout(
-                    function() {
-
-                        window.location.href =
-                            "chat.html";
-
-                    },
-                    700
-                );
-
-
-            } catch (error) {
-
-                message.textContent =
-                    error.message;
-
-            }
-
-        }
-    );
-
-}
-
-
-// ==========================================
-// CHAT VARIABLES
-// ==========================================
-
-let selectedUser =
-    null;
-
-
-// ==========================================
-// CHAT PAGE
-// ==========================================
-
-const chatPage =
-    document.querySelector(
-        ".chat-page"
-    );
-
-
-if (chatPage) {
-
-    const currentUser =
-        getCurrentUser();
-
-
-    if (!getToken() || !currentUser) {
-
-        window.location.href =
-            "login.html";
-
-    }
-
-
-    const myUsername =
-        document.getElementById(
-            "myUsername"
-        );
-
-
-    if (myUsername) {
-
-        myUsername.textContent =
-            `@${currentUser.username}`;
-
-    }
-
-
-    loadChatPage();
-
-}
-
-
-// ==========================================
-// LOAD CHAT PAGE
-// ==========================================
-
-function loadChatPage() {
-
-    const searchButton =
-        document.getElementById(
-            "searchUsersBtn"
-        );
-
-
-    const searchInput =
-        document.getElementById(
-            "userSearchInput"
-        );
-
-
-    const messageForm =
-        document.getElementById(
-            "messageForm"
-        );
-
-
-    const logoutButton =
-        document.getElementById(
-            "logoutBtn"
-        );
-
-
-    if (searchButton) {
-
-        searchButton.addEventListener(
-            "click",
-            searchForUsers
-        );
-
-    }
-
-
-    if (searchInput) {
-
-        searchInput.addEventListener(
-            "keydown",
-            function(event) {
-
-                if (
-                    event.key ===
-                    "Enter"
-                ) {
-
-                    event.preventDefault();
-
-                    searchForUsers();
-
-                }
-
-            }
-        );
-
-    }
-
-
-    if (messageForm) {
-
-        messageForm.addEventListener(
-            "submit",
-            sendChatMessage
-        );
-
-    }
-
-
-    if (logoutButton) {
-
-        logoutButton.addEventListener(
-            "click",
-            logoutUser
-        );
-
-    }
-
-}
-
-
-// ==========================================
-// SEARCH USERS
-// ==========================================
-
-async function searchForUsers() {
-
-    const searchInput =
-        document.getElementById(
-            "userSearchInput"
-        );
-
-
-    const resultsContainer =
-        document.getElementById(
-            "searchResults"
-        );
-
-
-    const query =
-        searchInput.value.trim();
-
-
-    if (!query) {
-
-        resultsContainer.innerHTML =
-            "<p>Enter a name or username.</p>";
-
-        return;
-
-    }
-
-
-    resultsContainer.innerHTML =
-        "<p>Searching...</p>";
 
 
     try {
 
-        const users =
-            await apiRequest(
-                `/api/users/search?q=${encodeURIComponent(query)}`
+        const user =
+            jwt.verify(
+                token,
+                JWT_SECRET
             );
 
 
+        request.user =
+            user;
+
+
+        next();
+
+
+    } catch {
+
+        response
+            .status(401)
+            .json({
+                message:
+                    "Invalid login session."
+            });
+
+    }
+
+}
+
+
+/* HOME */
+
+app.get(
+    "/",
+    function(
+        request,
+        response
+    ) {
+
+        response.json({
+            message:
+                "Kollins Chat backend is running."
+        });
+
+    }
+);
+
+
+/* REGISTER */
+
+app.post(
+    "/api/register",
+    function(
+        request,
+        response
+    ) {
+
+        const {
+            fullName,
+            username,
+            phoneNumber,
+            password
+        } =
+            request.body;
+
+
         if (
-            !users ||
-            users.length === 0
+            !fullName ||
+            !username ||
+            !phoneNumber ||
+            !password
         ) {
 
-            resultsContainer.innerHTML =
-                "<p>No users found.</p>";
-
-            return;
+            return response
+                .status(400)
+                .json({
+                    message:
+                        "Please fill in all fields."
+                });
 
         }
 
 
-        resultsContainer.innerHTML =
-            "";
+        const cleanUsername =
+            username
+                .replace(
+                    "@",
+                    ""
+                )
+                .trim()
+                .toLowerCase();
 
 
-        users.forEach(
-            function(user) {
+        const hashedPassword =
+            bcrypt.hashSync(
+                password,
+                10
+            );
 
-                const userButton =
-                    document.createElement(
-                        "button"
+
+        const query = `
+
+            INSERT INTO users
+            (
+                fullName,
+                username,
+                phoneNumber,
+                password
+            )
+
+            VALUES
+            (?, ?, ?, ?)
+
+        `;
+
+
+        db.run(
+            query,
+            [
+                fullName.trim(),
+                cleanUsername,
+                phoneNumber.trim(),
+                hashedPassword
+            ],
+            function(error) {
+
+                if (error) {
+
+                    return response
+                        .status(400)
+                        .json({
+                            message:
+                                "Username or phone number already exists."
+                        });
+
+                }
+
+
+                const token =
+                    jwt.sign(
+                        {
+                            id:
+                                this.lastID
+                        },
+                        JWT_SECRET,
+                        {
+                            expiresIn:
+                                "7d"
+                        }
                     );
 
 
-                userButton.className =
-                    "user-result";
+                response
+                    .status(201)
+                    .json({
+
+                        token,
+
+                        user: {
+
+                            _id:
+                                this.lastID,
+
+                            fullName:
+                                fullName.trim(),
+
+                            username:
+                                cleanUsername,
+
+                            phoneNumber:
+                                phoneNumber.trim()
+
+                        }
+
+                    });
+
+            }
+        );
+
+    }
+);
 
 
-                userButton.innerHTML =
+/* LOGIN */
 
-                    `<strong>
-                        ${escapeHtml(
-                            user.fullName
-                        )}
-                    </strong>
+app.post(
+    "/api/login",
+    function(
+        request,
+        response
+    ) {
 
-                    <span>
-                        @${escapeHtml(
-                            user.username
-                        )}
-                    </span>`;
+        const {
+            identifier,
+            password
+        } =
+            request.body;
 
 
-                userButton.addEventListener(
-                    "click",
-                    function() {
+        db.get(
+            `
+            SELECT *
+            FROM users
+            WHERE username = ?
+            OR phoneNumber = ?
+            `,
+            [
+                identifier
+                    .replace(
+                        "@",
+                        ""
+                    )
+                    .trim()
+                    .toLowerCase(),
 
-                        openConversation(
-                            user
-                        );
+                identifier.trim()
+            ],
+            function(
+                error,
+                user
+            ) {
+
+                if (
+                    error ||
+                    !user
+                ) {
+
+                    return response
+                        .status(401)
+                        .json({
+                            message:
+                                "Invalid login details."
+                        });
+
+                }
+
+
+                const valid =
+                    bcrypt.compareSync(
+                        password,
+                        user.password
+                    );
+
+
+                if (!valid) {
+
+                    return response
+                        .status(401)
+                        .json({
+                            message:
+                                "Invalid login details."
+                        });
+
+                }
+
+
+                const token =
+                    jwt.sign(
+                        {
+                            id:
+                                user.id
+                        },
+                        JWT_SECRET,
+                        {
+                            expiresIn:
+                                "7d"
+                        }
+                    );
+
+
+                response.json({
+
+                    token,
+
+                    user: {
+
+                        _id:
+                            user.id,
+
+                        fullName:
+                            user.fullName,
+
+                        username:
+                            user.username,
+
+                        phoneNumber:
+                            user.phoneNumber
 
                     }
+
+                });
+
+            }
+        );
+
+    }
+);
+
+
+/* FIND FRIEND BY PHONE */
+
+app.post(
+    "/api/users/find",
+    authenticate,
+    function(
+        request,
+        response
+    ) {
+
+        const {
+            phoneNumber
+        } =
+            request.body;
+
+
+        db.get(
+            `
+            SELECT
+                id,
+                fullName,
+                username,
+                phoneNumber
+            FROM users
+            WHERE phoneNumber = ?
+            `,
+            [
+                phoneNumber.trim()
+            ],
+            function(
+                error,
+                user
+            ) {
+
+                if (
+                    error ||
+                    !user
+                ) {
+
+                    return response
+                        .status(404)
+                        .json({
+                            message:
+                                "No registered user found with that phone number."
+                        });
+
+                }
+
+
+                if (
+                    user.id ===
+                    request.user.id
+                ) {
+
+                    return response
+                        .status(400)
+                        .json({
+                            message:
+                                "You cannot add yourself."
+                        });
+
+                }
+
+
+                db.run(
+                    `
+                    INSERT OR IGNORE INTO contacts
+                    (
+                        userId,
+                        friendId
+                    )
+                    VALUES
+                    (?, ?)
+                    `,
+                    [
+                        request.user.id,
+                        user.id
+                    ]
                 );
 
 
-                resultsContainer.appendChild(
-                    userButton
+                db.run(
+                    `
+                    INSERT OR IGNORE INTO contacts
+                    (
+                        userId,
+                        friendId
+                    )
+                    VALUES
+                    (?, ?)
+                    `,
+                    [
+                        user.id,
+                        request.user.id
+                    ]
+                );
+
+
+                response.json({
+
+                    _id:
+                        user.id,
+
+                    fullName:
+                        user.fullName,
+
+                    username:
+                        user.username,
+
+                    phoneNumber:
+                        user.phoneNumber
+
+                });
+
+            }
+        );
+
+    }
+);
+
+
+/* CONTACTS */
+
+app.get(
+    "/api/contacts",
+    authenticate,
+    function(
+        request,
+        response
+    ) {
+
+        db.all(
+            `
+            SELECT
+                users.id AS _id,
+                users.fullName,
+                users.username,
+                users.phoneNumber
+            FROM contacts
+            JOIN users
+            ON users.id = contacts.friendId
+            WHERE contacts.userId = ?
+            `,
+            [
+                request.user.id
+            ],
+            function(
+                error,
+                users
+            ) {
+
+                if (error) {
+
+                    return response
+                        .status(500)
+                        .json({
+                            message:
+                                "Unable to load contacts."
+                        });
+
+                }
+
+
+                response.json(
+                    users
                 );
 
             }
         );
 
-
-    } catch (error) {
-
-        resultsContainer.innerHTML =
-            `<p>${escapeHtml(
-                error.message
-            )}</p>`;
-
     }
-
-}
-
-
-// ==========================================
-// OPEN CONVERSATION
-// ==========================================
-
-function openConversation(
-    user
-) {
-
-    selectedUser =
-        user;
+);
 
 
-    const emptyChat =
-        document.getElementById(
-            "emptyChat"
-        );
+/* SEND MESSAGE */
 
+app.post(
+    "/api/messages",
+    authenticate,
+    function(
+        request,
+        response
+    ) {
 
-    const activeChat =
-        document.getElementById(
-            "activeChat"
-        );
-
-
-    const chatUserName =
-        document.getElementById(
-            "chatUserName"
-        );
-
-
-    const chatUserUsername =
-        document.getElementById(
-            "chatUserUsername"
-        );
-
-
-    if (emptyChat) {
-
-        emptyChat.style.display =
-            "none";
-
-    }
-
-
-    if (activeChat) {
-
-        activeChat.style.display =
-            "flex";
-
-    }
-
-
-    if (chatUserName) {
-
-        chatUserName.textContent =
-            user.fullName;
-
-    }
-
-
-    if (chatUserUsername) {
-
-        chatUserUsername.textContent =
-            `@${user.username}`;
-
-    }
-
-
-    loadMessages();
-
-}
-
-
-// ==========================================
-// LOAD MESSAGES
-// ==========================================
-
-async function loadMessages() {
-
-    if (!selectedUser) {
-
-        return;
-
-    }
-
-
-    const messagesContainer =
-        document.getElementById(
-            "messagesContainer"
-        );
-
-
-    messagesContainer.innerHTML =
-        "<p>Loading messages...</p>";
-
-
-    try {
-
-        const messages =
-            await apiRequest(
-                `/api/messages/${selectedUser._id}`
-            );
-
-
-        messagesContainer.innerHTML =
-            "";
+        const {
+            receiverId,
+            message
+        } =
+            request.body;
 
 
         if (
-            !messages ||
-            messages.length === 0
+            !receiverId ||
+            !message
         ) {
 
-            messagesContainer.innerHTML =
-                "<p class=\"no-messages\">No messages yet. Start the conversation!</p>";
-
-            return;
+            return response
+                .status(400)
+                .json({
+                    message:
+                        "Message cannot be empty."
+                });
 
         }
 
 
-        const currentUser =
-            getCurrentUser();
+        db.run(
+            `
+            INSERT INTO messages
+            (
+                senderId,
+                receiverId,
+                message
+            )
+            VALUES
+            (?, ?, ?)
+            `,
+            [
+                request.user.id,
+                receiverId,
+                message.trim()
+            ],
+            function(error) {
+
+                if (error) {
+
+                    return response
+                        .status(500)
+                        .json({
+                            message:
+                                "Unable to send message."
+                        });
+
+                }
 
 
-        messages.forEach(
-            function(message) {
+                response.json({
 
-                const messageElement =
-                    document.createElement(
-                        "div"
-                    );
+                    message:
+                        "Message sent.",
 
+                    id:
+                        this.lastID
 
-                const isMine =
-                    message.sender._id ===
-                    currentUser.id;
+                });
 
+            }
+        );
 
-                messageElement.className =
-                    isMine
-                        ? "message sent"
-                        : "message received";
+    }
+);
 
 
-                messageElement.innerHTML =
+/* GET MESSAGES */
 
-                    `<div class="message-bubble">
+app.get(
+    "/api/messages/:userId",
+    authenticate,
+    function(
+        request,
+        response
+    ) {
 
-                        <p>
-                            ${escapeHtml(
-                                message.message
-                            )}
-                        </p>
-
-                        <small>
-                            ${formatTime(
-                                message.createdAt
-                            )}
-                        </small>
-
-                    </div>`;
+        const otherUser =
+            request.params.userId;
 
 
-                messagesContainer.appendChild(
-                    messageElement
+        db.all(
+            `
+            SELECT
+                id,
+                senderId,
+                receiverId,
+                message,
+                createdAt
+            FROM messages
+
+            WHERE
+            (
+                senderId = ?
+                AND
+                receiverId = ?
+            )
+
+            OR
+
+            (
+                senderId = ?
+                AND
+                receiverId = ?
+            )
+
+            ORDER BY
+            createdAt ASC
+            `,
+            [
+                request.user.id,
+                otherUser,
+                otherUser,
+                request.user.id
+            ],
+            function(
+                error,
+                messages
+            ) {
+
+                if (error) {
+
+                    return response
+                        .status(500)
+                        .json({
+                            message:
+                                "Unable to load messages."
+                        });
+
+                }
+
+
+                response.json(
+                    messages
                 );
 
             }
         );
 
+    }
+);
 
-        messagesContainer.scrollTop =
-            messagesContainer.scrollHeight;
 
+/* START SERVER */
 
-    } catch (error) {
+app.listen(
+    PORT,
+    function() {
 
-        messagesContainer.innerHTML =
-            `<p>${escapeHtml(
-                error.message
-            )}</p>`;
+        console.log(
+            `Kollins Chat backend running on port ${PORT}`
+        );
 
     }
-
-}
-
-
-// ==========================================
-// SEND MESSAGE
-// ==========================================
-
-async function sendChatMessage(
-    event
-) {
-
-    event.preventDefault();
-
-
-    if (!selectedUser) {
-
-        alert(
-            "Select a user first."
-        );
-
-        return;
-
-    }
-
-
-    const messageInput =
-        document.getElementById(
-            "messageInput"
-        );
-
-
-    const message =
-        messageInput.value.trim();
-
-
-    if (!message) {
-
-        return;
-
-    }
-
-
-    try {
-
-        messageInput.disabled =
-            true;
-
-
-        await apiRequest(
-            "/api/messages",
-            {
-
-                method:
-                    "POST",
-
-                body:
-                    JSON.stringify(
-                        {
-                            receiverId:
-                                selectedUser._id,
-
-                            message:
-                                message
-                        }
-                    )
-
-            }
-        );
-
-
-        messageInput.value =
-            "";
-
-
-        await loadMessages();
-
-
-    } catch (error) {
-
-        alert(
-            error.message
-        );
-
-
-    } finally {
-
-        messageInput.disabled =
-            false;
-
-
-        messageInput.focus();
-
-    }
-
-}
-
-
-// ==========================================
-// LOGOUT
-// ==========================================
-
-function logoutUser() {
-
-    localStorage.removeItem(
-        "kollinsToken"
-    );
-
-
-    localStorage.removeItem(
-        "kollinsUser"
-    );
-
-
-    window.location.href =
-        "login.html";
-
-}
-
-
-// ==========================================
-// FORMAT TIME
-// ==========================================
-
-function formatTime(
-    dateString
-) {
-
-    const date =
-        new Date(
-            dateString
-        );
-
-
-    return date.toLocaleTimeString(
-        [],
-        {
-            hour:
-                "2-digit",
-
-            minute:
-                "2-digit"
-        }
-    );
-
-}
-
-
-// ==========================================
-// SECURITY
-// ==========================================
-
-function escapeHtml(
-    text
-) {
-
-    const div =
-        document.createElement(
-            "div"
-        );
-
-
-    div.textContent =
-        text;
-
-
-    return div.innerHTML;
-
-}
+);
