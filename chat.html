@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta
+name="viewport"
+content="width=device-width, initial-scale=1.0"
+>
+
+<meta
+name="theme-color"
+content="#075e54"
+>
+
+<title>
+Kollins Chat
+</title>
+
+<link
+rel="stylesheet"
+href="style.css"
+>
+
+</head>
+
+
+<body class="chat-page">
+
+
+<div class="chat-app">
+
+
+<!-- Sidebar -->
+
+<aside class="chat-sidebar">
+
+
+<div class="chat-header">
+
+<div>
+
+<h2>
+Kollins Chat
+</h2>
+
+<p
+id="myUsername"
+>
+</p>
+
+</div>
+
+
+<button
+id="logoutBtn"
+class="logout-button"
+>
+Logout
+</button>
+
+</div>
+
+
+<!-- Search Users -->
+
+<div class="user-search">
+
+<input
+type="text"
+id="userSearchInput"
+placeholder="Search for users..."
+>
+
+<button
+id="searchUsersBtn"
+>
+Search
+</button>
+
+</div>
+
+
+<!-- Search Results -->
+
+<div
+id="searchResults"
+class="search-results"
+>
+
+<p>
+Search for someone to start chatting.
+</p>
+
+</div>
+
+
+</aside>
+
+
+<!-- Main Chat Area -->
+
+<main class="chat-main">
+
+
+<!-- Empty Chat -->
+
+<div
+id="emptyChat"
+class="empty-chat"
+>
+
+<div class="chat-logo">
+💬
+</div>
+
+<h2>
+Welcome to Kollins Chat
+</h2>
+
+<p>
+Search for a user to start a conversation.
+</p>
+
+</div>
+
+
+<!-- Active Chat -->
+
+<div
+id="activeChat"
+class="active-chat"
+style="display: none;"
+>
+
+
+<!-- Chat Header -->
+
+<div class="conversation-header">
+
+
+<div>
+
+<h3
+id="chatUserName"
+>
+User
+</h3>
+
+
+<p
+id="chatUserUsername"
+>
+</p>
+
+</div>
+
+
+</div>
+
+
+<!-- Messages -->
+
+<div
+id="messagesContainer"
+class="messages-container"
+>
+
+</div>
+
+
+<!-- Message Input -->
+
+<form
+id="messageForm"
+class="message-form"
+>
+
+
+<input
+type="text"
+id="messageInput"
+placeholder="Type a message..."
+autocomplete="off"
+required
+>
+
+
+<button
+type="submit"
+>
+Send
+</button>
+
+
+</form>
+
+
+</div>
+
+
+</main>
+
+
+</div>
+
+
+<script
+src="script.js"
+>
+</script>
+
+
+</body>
+
+</html>
