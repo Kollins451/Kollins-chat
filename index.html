@@ -2,6 +2,7 @@
 <html lang="en">
 
 <head>
+
 <meta charset="UTF-8">
 
 <meta
@@ -19,7 +20,9 @@ name="description"
 content="Kollins Chat - Connect and message people"
 >
 
-<title>Kollins Chat</title>
+<title>
+Welcome to Kollins Chat
+</title>
 
 <link
 rel="stylesheet"
@@ -30,186 +33,17 @@ href="style.css"
 rel="manifest"
 href="manifest.json"
 >
+
 </head>
 
 
-<body>
+<body class="welcome-page">
 
-<div class="app">
 
+<div class="welcome-container">
 
-<!-- Sidebar -->
 
-<aside class="sidebar">
-
-
-<header class="sidebar-header">
-
-
-<div class="my-profile">
-
-<div class="avatar">
-K
-</div>
-
-
-<div>
-
-<h2 id="myUsername">
-@kollins
-</h2>
-
-<p>
-Online
-</p>
-
-</div>
-
-</div>
-
-
-<button
-id="newChatBtn"
-class="icon-btn"
->
-+
-</button>
-
-
-</header>
-
-
-<!-- Search -->
-
-<div class="search-box">
-
-<input
-type="text"
-id="searchInput"
-placeholder="Search chats..."
->
-
-</div>
-
-
-<!-- Chat List -->
-
-<div
-id="chatList"
-class="chat-list"
->
-
-
-<div
-class="chat-item active"
-data-name="Welcome"
->
-
-
-<div class="avatar">
-W
-</div>
-
-
-<div class="chat-info">
-
-
-<div class="chat-top">
-
-<strong>
-Welcome
-</strong>
-
-<span>
-Now
-</span>
-
-</div>
-
-
-<p>
-Welcome to Kollins Chat!
-</p>
-
-
-</div>
-
-
-</div>
-
-
-</div>
-
-
-</aside>
-
-
-<!-- Chat Area -->
-
-<main class="chat-area">
-
-
-<header class="chat-header">
-
-
-<div class="user-details">
-
-
-<div class="avatar">
-W
-</div>
-
-
-<div>
-
-
-<h2 id="chatUserName">
-Welcome
-</h2>
-
-
-<p id="chatUserStatus">
-Online
-</p>
-
-
-</div>
-
-
-</div>
-
-
-<div class="chat-actions">
-
-
-<button class="icon-btn">
-⌕
-</button>
-
-
-<button class="icon-btn">
-⋮
-</button>
-
-
-</div>
-
-
-</header>
-
-
-<!-- Messages -->
-
-<section
-id="messages"
-class="messages"
->
-
-
-<div class="welcome-screen">
-
-
-<div class="welcome-icon">
+<div class="welcome-logo">
 💬
 </div>
 
@@ -220,100 +54,29 @@ Welcome to Kollins Chat
 
 
 <p>
-Find people, connect with friends,
+Connect with friends,
+find new people,
 and start chatting.
 </p>
 
 
-</div>
+<div class="welcome-buttons">
 
 
-</section>
-
-
-<!-- Message Input -->
-
-<footer class="message-input-area">
-
-
-<button
-id="emojiBtn"
-class="input-btn"
+<a
+href="register.html"
+class="welcome-button primary"
 >
-😊
-</button>
+Create Account
+</a>
 
 
-<input
-type="text"
-id="messageInput"
-placeholder="Type a message..."
-autocomplete="off"
+<a
+href="login.html"
+class="welcome-button secondary"
 >
-
-
-<button
-id="sendBtn"
-class="send-btn"
->
-➤
-</button>
-
-
-</footer>
-
-
-</main>
-
-
-</div>
-
-
-<!-- New Chat Modal -->
-
-<div
-id="newChatModal"
-class="modal hidden"
->
-
-
-<div class="modal-content">
-
-
-<button
-id="closeModalBtn"
-class="close-btn"
->
-×
-</button>
-
-
-<h2>
-Find a User
-</h2>
-
-
-<p>
-Search using a username or phone number.
-</p>
-
-
-<input
-type="text"
-id="usernameInput"
-placeholder="@username or phone number"
->
-
-
-<button
-id="startChatBtn"
-class="primary-btn"
->
-Search
-</button>
-
-
-<p id="userResult"></p>
+Log In
+</a>
 
 
 </div>
@@ -323,7 +86,6 @@ Search
 
 
 <script src="script.js"></script>
-
 
 </body>
 
