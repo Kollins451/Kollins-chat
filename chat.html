@@ -33,12 +33,11 @@ href="style.css"
 <div class="chat-app">
 
 
-<!-- Sidebar -->
-
 <aside class="chat-sidebar">
 
 
 <div class="chat-header">
+
 
 <div>
 
@@ -46,9 +45,8 @@ href="style.css"
 Kollins Chat
 </h2>
 
-<p
-id="myUsername"
->
+
+<p id="myUsername">
 </p>
 
 </div>
@@ -61,37 +59,67 @@ class="logout-button"
 Logout
 </button>
 
+
 </div>
 
 
-<!-- Search Users -->
+<div class="contacts-title">
 
-<div class="user-search">
 
-<input
-type="text"
-id="userSearchInput"
-placeholder="Search for users..."
->
+<h3>
+Chats
+</h3>
+
 
 <button
-id="searchUsersBtn"
+id="addFriendBtn"
+class="add-friend-button"
 >
-Search
++
 </button>
+
 
 </div>
 
 
-<!-- Search Results -->
-
 <div
-id="searchResults"
-class="search-results"
+id="addFriendBox"
+class="add-friend-box"
+style="display: none;"
 >
 
-<p>
-Search for someone to start chatting.
+
+<input
+type="tel"
+id="friendPhone"
+placeholder="Enter friend's phone number"
+>
+
+
+<button
+id="addFriendSubmit"
+>
+Add
+</button>
+
+
+<p
+id="addFriendMessage"
+>
+</p>
+
+
+</div>
+
+
+<div
+id="contactsList"
+class="contacts-list"
+>
+
+<p class="empty-contacts">
+No chats yet.
+Tap + to add a friend.
 </p>
 
 </div>
@@ -100,34 +128,32 @@ Search for someone to start chatting.
 </aside>
 
 
-<!-- Main Chat Area -->
-
 <main class="chat-main">
 
-
-<!-- Empty Chat -->
 
 <div
 id="emptyChat"
 class="empty-chat"
 >
 
+
 <div class="chat-logo">
 💬
 </div>
+
 
 <h2>
 Welcome to Kollins Chat
 </h2>
 
+
 <p>
-Search for a user to start a conversation.
+Add a friend using their registered phone number to start chatting.
 </p>
+
 
 </div>
 
-
-<!-- Active Chat -->
 
 <div
 id="activeChat"
@@ -135,8 +161,6 @@ class="active-chat"
 style="display: none;"
 >
 
-
-<!-- Chat Header -->
 
 <div class="conversation-header">
 
@@ -161,17 +185,12 @@ id="chatUserUsername"
 </div>
 
 
-<!-- Messages -->
-
 <div
 id="messagesContainer"
 class="messages-container"
 >
-
 </div>
 
-
-<!-- Message Input -->
 
 <form
 id="messageForm"
@@ -207,10 +226,7 @@ Send
 </div>
 
 
-<script
-src="script.js"
->
-</script>
+<script src="script.js"></script>
 
 
 </body>
