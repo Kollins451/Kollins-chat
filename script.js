@@ -1,756 +1,1215 @@
-const express = require("express");
-
-const cors = require("cors");
-
-const bcrypt = require("bcryptjs");
-
-const jwt = require("jsonwebtoken");
-
-const sqlite3 =
-    require("sqlite3")
-        .verbose();
-
-require("dotenv").config();
+const API_URL =
+    "https://kollins-chat-backend.onrender.com";
 
 
-const app =
-    express();
+/* ================================
+   STORAGE
+================================ */
 
 
-const PORT =
-    process.env.PORT ||
-    10000;
+function getToken() {
 
-
-const JWT_SECRET =
-    process.env.JWT_SECRET ||
-    "kollins-chat-secret";
-
-
-app.use(
-    cors({
-        origin: [
-            "https://kollins451.github.io"
-        ]
-    })
-);
-
-
-app.use(
-    express.json()
-);
-
-
-const db =
-    new sqlite3.Database(
-        "./kollins-chat.db"
+    return localStorage.getItem(
+        "kollinsToken"
     );
 
-
-db.serialize(
-    function() {
-
-        db.run(`
-            CREATE TABLE IF NOT EXISTS users (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                fullName TEXT NOT NULL,
-                username TEXT UNIQUE NOT NULL,
-                phoneNumber TEXT UNIQUE NOT NULL,
-                password TEXT NOT NULL
-            )
-        `);
+}
 
 
-        db.run(`
-            CREATE TABLE IF NOT EXISTS contacts (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                userId INTEGER NOT NULL,
-                friendId INTEGER NOT NULL,
-                UNIQUE(userId, friendId)
-            )
-        `);
+function getUser() {
+
+    const savedUser =
+        localStorage.getItem(
+            "kollinsUser"
+        );
 
 
-        db.run(`
-            CREATE TABLE IF NOT EXISTS messages (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                senderId INTEGER NOT NULL,
-                receiverId INTEGER NOT NULL,
-                message TEXT NOT NULL,
-                createdAt DATETIME DEFAULT CURRENT_TIMESTAMP
-            )
-        `);
+    if (!savedUser) {
 
-    }
-);
-
-
-/* AUTH */
-
-function authenticate(
-    request,
-    response,
-    next
-) {
-
-    const header =
-        request.headers.authorization;
-
-
-    const token =
-        header &&
-        header.split(" ")[1];
-
-
-    if (!token) {
-
-        return response
-            .status(401)
-            .json({
-                message:
-                    "Please log in."
-            });
+        return null;
 
     }
 
 
     try {
 
-        const user =
-            jwt.verify(
-                token,
-                JWT_SECRET
-            );
-
-
-        request.user =
-            user;
-
-
-        next();
-
+        return JSON.parse(
+            savedUser
+        );
 
     } catch {
 
-        response
-            .status(401)
-            .json({
-                message:
-                    "Invalid login session."
-            });
+        return null;
 
     }
 
 }
 
 
-/* HOME */
+/* ================================
+   API REQUEST
+================================ */
 
-app.get(
-    "/",
-    function(
-        request,
-        response
-    ) {
 
-        response.json({
-            message:
-                "Kollins Chat backend is running."
-        });
+async function apiRequest(
+    endpoint,
+    options = {}
+) {
+
+    const headers = {
+
+        "Content-Type":
+            "application/json"
+
+    };
+
+
+    const token =
+        getToken();
+
+
+    if (token) {
+
+        headers.Authorization =
+            `Bearer ${token}`;
 
     }
-);
 
 
-/* REGISTER */
-
-app.post(
-    "/api/register",
-    function(
-        request,
-        response
-    ) {
-
-        const {
-            fullName,
-            username,
-            phoneNumber,
-            password
-        } =
-            request.body;
+    const response =
+        await fetch(
+            `${API_URL}${endpoint}`,
+            {
+                ...options,
+                headers
+            }
+        );
 
 
-        if (
-            !fullName ||
-            !username ||
-            !phoneNumber ||
-            !password
-        ) {
+    let data;
 
-            return response
-                .status(400)
-                .json({
-                    message:
-                        "Please fill in all fields."
-                });
+
+    try {
+
+        data =
+            await response.json();
+
+    } catch {
+
+        data = {};
+
+    }
+
+
+    if (!response.ok) {
+
+        throw new Error(
+
+            data.message ||
+            "Something went wrong. Please try again."
+
+        );
+
+    }
+
+
+    return data;
+
+}
+
+
+/* ================================
+   REGISTER
+================================ */
+
+
+const registerForm =
+    document.getElementById(
+        "registerForm"
+    );
+
+
+if (registerForm) {
+
+    registerForm.addEventListener(
+        "submit",
+        async function(event) {
+
+            event.preventDefault();
+
+
+            const fullName =
+                document
+                    .getElementById(
+                        "fullName"
+                    )
+                    .value
+                    .trim();
+
+
+            const username =
+                document
+                    .getElementById(
+                        "username"
+                    )
+                    .value
+                    .trim();
+
+
+            const phoneNumber =
+                document
+                    .getElementById(
+                        "phoneNumber"
+                    )
+                    .value
+                    .trim();
+
+
+            const password =
+                document
+                    .getElementById(
+                        "registerPassword"
+                    )
+                    .value;
+
+
+            const confirmPassword =
+                document
+                    .getElementById(
+                        "confirmPassword"
+                    )
+                    .value;
+
+
+            const message =
+                document.getElementById(
+                    "registerMessage"
+                );
+
+
+            if (
+                !fullName ||
+                !username ||
+                !phoneNumber ||
+                !password ||
+                !confirmPassword
+            ) {
+
+                message.textContent =
+                    "Please fill in all fields.";
+
+                return;
+
+            }
+
+
+            if (
+                password !==
+                confirmPassword
+            ) {
+
+                message.textContent =
+                    "Passwords do not match.";
+
+                return;
+
+            }
+
+
+            const button =
+                registerForm.querySelector(
+                    "button[type='submit']"
+                );
+
+
+            button.disabled =
+                true;
+
+
+            button.textContent =
+                "Creating Account...";
+
+
+            message.textContent =
+                "";
+
+
+            try {
+
+                const data =
+                    await apiRequest(
+                        "/api/register",
+                        {
+
+                            method:
+                                "POST",
+
+                            body:
+                                JSON.stringify({
+
+                                    fullName,
+
+                                    username,
+
+                                    phoneNumber,
+
+                                    password
+
+                                })
+
+                        }
+                    );
+
+
+                /*
+                   SAVE LOGIN INFORMATION
+                */
+
+
+                if (
+                    data.token
+                ) {
+
+                    localStorage.setItem(
+                        "kollinsToken",
+                        data.token
+                    );
+
+                }
+
+
+                if (
+                    data.user
+                ) {
+
+                    localStorage.setItem(
+
+                        "kollinsUser",
+
+                        JSON.stringify(
+                            data.user
+                        )
+
+                    );
+
+                }
+
+
+                /*
+                   ACCOUNT CREATED
+                   GO DIRECTLY TO CHAT
+                */
+
+
+                message.textContent =
+                    "Account created successfully!";
+
+
+                window.location.replace(
+                    "chat.html"
+                );
+
+
+            } catch (error) {
+
+                console.error(
+                    "Registration error:",
+                    error
+                );
+
+
+                message.textContent =
+                    error.message;
+
+
+                button.disabled =
+                    false;
+
+
+                button.textContent =
+                    "Create Account";
+
+            }
 
         }
+    );
+
+}
 
 
-        const cleanUsername =
-            username
-                .replace(
-                    "@",
-                    ""
-                )
-                .trim()
-                .toLowerCase();
+/* ================================
+   LOGIN
+================================ */
 
 
-        const hashedPassword =
-            bcrypt.hashSync(
-                password,
-                10
+const loginForm =
+    document.getElementById(
+        "loginForm"
+    );
+
+
+if (loginForm) {
+
+    loginForm.addEventListener(
+        "submit",
+        async function(event) {
+
+            event.preventDefault();
+
+
+            const identifier =
+                document
+                    .getElementById(
+                        "loginIdentifier"
+                    )
+                    .value
+                    .trim();
+
+
+            const password =
+                document
+                    .getElementById(
+                        "loginPassword"
+                    )
+                    .value;
+
+
+            const message =
+                document.getElementById(
+                    "loginMessage"
+                );
+
+
+            const button =
+                loginForm.querySelector(
+                    "button[type='submit']"
+                );
+
+
+            button.disabled =
+                true;
+
+
+            button.textContent =
+                "Logging In...";
+
+
+            message.textContent =
+                "";
+
+
+            try {
+
+                const data =
+                    await apiRequest(
+                        "/api/login",
+                        {
+
+                            method:
+                                "POST",
+
+                            body:
+                                JSON.stringify({
+
+                                    identifier,
+
+                                    password
+
+                                })
+
+                        }
+                    );
+
+
+                /*
+                   SAVE LOGIN INFORMATION
+                */
+
+
+                if (
+                    data.token
+                ) {
+
+                    localStorage.setItem(
+                        "kollinsToken",
+                        data.token
+                    );
+
+                }
+
+
+                if (
+                    data.user
+                ) {
+
+                    localStorage.setItem(
+
+                        "kollinsUser",
+
+                        JSON.stringify(
+                            data.user
+                        )
+
+                    );
+
+                }
+
+
+                /*
+                   GO DIRECTLY TO CHAT
+                */
+
+
+                window.location.replace(
+                    "chat.html"
+                );
+
+
+            } catch (error) {
+
+                console.error(
+                    "Login error:",
+                    error
+                );
+
+
+                message.textContent =
+                    error.message;
+
+
+                button.disabled =
+                    false;
+
+
+                button.textContent =
+                    "Log In";
+
+            }
+
+        }
+    );
+
+}
+
+
+/* ================================
+   CHAT PAGE PROTECTION
+================================ */
+
+
+const chatPage =
+    document.querySelector(
+        ".chat-page"
+    );
+
+
+if (chatPage) {
+
+    const token =
+        getToken();
+
+
+    const user =
+        getUser();
+
+
+    if (
+        !token ||
+        !user
+    ) {
+
+        window.location.replace(
+            "login.html"
+        );
+
+    } else {
+
+        const usernameElement =
+            document.getElementById(
+                "myUsername"
             );
 
 
-        const query = `
-
-            INSERT INTO users
-            (
-                fullName,
-                username,
-                phoneNumber,
-                password
-            )
-
-            VALUES
-            (?, ?, ?, ?)
-
-        `;
-
-
-        db.run(
-            query,
-            [
-                fullName.trim(),
-                cleanUsername,
-                phoneNumber.trim(),
-                hashedPassword
-            ],
-            function(error) {
-
-                if (error) {
-
-                    return response
-                        .status(400)
-                        .json({
-                            message:
-                                "Username or phone number already exists."
-                        });
-
-                }
-
-
-                const token =
-                    jwt.sign(
-                        {
-                            id:
-                                this.lastID
-                        },
-                        JWT_SECRET,
-                        {
-                            expiresIn:
-                                "7d"
-                        }
-                    );
-
-
-                response
-                    .status(201)
-                    .json({
-
-                        token,
-
-                        user: {
-
-                            _id:
-                                this.lastID,
-
-                            fullName:
-                                fullName.trim(),
-
-                            username:
-                                cleanUsername,
-
-                            phoneNumber:
-                                phoneNumber.trim()
-
-                        }
-
-                    });
-
-            }
-        );
-
-    }
-);
-
-
-/* LOGIN */
-
-app.post(
-    "/api/login",
-    function(
-        request,
-        response
-    ) {
-
-        const {
-            identifier,
-            password
-        } =
-            request.body;
-
-
-        db.get(
-            `
-            SELECT *
-            FROM users
-            WHERE username = ?
-            OR phoneNumber = ?
-            `,
-            [
-                identifier
-                    .replace(
-                        "@",
-                        ""
-                    )
-                    .trim()
-                    .toLowerCase(),
-
-                identifier.trim()
-            ],
-            function(
-                error,
-                user
-            ) {
-
-                if (
-                    error ||
-                    !user
-                ) {
-
-                    return response
-                        .status(401)
-                        .json({
-                            message:
-                                "Invalid login details."
-                        });
-
-                }
-
-
-                const valid =
-                    bcrypt.compareSync(
-                        password,
-                        user.password
-                    );
-
-
-                if (!valid) {
-
-                    return response
-                        .status(401)
-                        .json({
-                            message:
-                                "Invalid login details."
-                        });
-
-                }
-
-
-                const token =
-                    jwt.sign(
-                        {
-                            id:
-                                user.id
-                        },
-                        JWT_SECRET,
-                        {
-                            expiresIn:
-                                "7d"
-                        }
-                    );
-
-
-                response.json({
-
-                    token,
-
-                    user: {
-
-                        _id:
-                            user.id,
-
-                        fullName:
-                            user.fullName,
-
-                        username:
-                            user.username,
-
-                        phoneNumber:
-                            user.phoneNumber
-
-                    }
-
-                });
-
-            }
-        );
-
-    }
-);
-
-
-/* FIND FRIEND BY PHONE */
-
-app.post(
-    "/api/users/find",
-    authenticate,
-    function(
-        request,
-        response
-    ) {
-
-        const {
-            phoneNumber
-        } =
-            request.body;
-
-
-        db.get(
-            `
-            SELECT
-                id,
-                fullName,
-                username,
-                phoneNumber
-            FROM users
-            WHERE phoneNumber = ?
-            `,
-            [
-                phoneNumber.trim()
-            ],
-            function(
-                error,
-                user
-            ) {
-
-                if (
-                    error ||
-                    !user
-                ) {
-
-                    return response
-                        .status(404)
-                        .json({
-                            message:
-                                "No registered user found with that phone number."
-                        });
-
-                }
-
-
-                if (
-                    user.id ===
-                    request.user.id
-                ) {
-
-                    return response
-                        .status(400)
-                        .json({
-                            message:
-                                "You cannot add yourself."
-                        });
-
-                }
-
-
-                db.run(
-                    `
-                    INSERT OR IGNORE INTO contacts
-                    (
-                        userId,
-                        friendId
-                    )
-                    VALUES
-                    (?, ?)
-                    `,
-                    [
-                        request.user.id,
-                        user.id
-                    ]
-                );
-
-
-                db.run(
-                    `
-                    INSERT OR IGNORE INTO contacts
-                    (
-                        userId,
-                        friendId
-                    )
-                    VALUES
-                    (?, ?)
-                    `,
-                    [
-                        user.id,
-                        request.user.id
-                    ]
-                );
-
-
-                response.json({
-
-                    _id:
-                        user.id,
-
-                    fullName:
-                        user.fullName,
-
-                    username:
-                        user.username,
-
-                    phoneNumber:
-                        user.phoneNumber
-
-                });
-
-            }
-        );
-
-    }
-);
-
-
-/* CONTACTS */
-
-app.get(
-    "/api/contacts",
-    authenticate,
-    function(
-        request,
-        response
-    ) {
-
-        db.all(
-            `
-            SELECT
-                users.id AS _id,
-                users.fullName,
-                users.username,
-                users.phoneNumber
-            FROM contacts
-            JOIN users
-            ON users.id = contacts.friendId
-            WHERE contacts.userId = ?
-            `,
-            [
-                request.user.id
-            ],
-            function(
-                error,
-                users
-            ) {
-
-                if (error) {
-
-                    return response
-                        .status(500)
-                        .json({
-                            message:
-                                "Unable to load contacts."
-                        });
-
-                }
-
-
-                response.json(
-                    users
-                );
-
-            }
-        );
-
-    }
-);
-
-
-/* SEND MESSAGE */
-
-app.post(
-    "/api/messages",
-    authenticate,
-    function(
-        request,
-        response
-    ) {
-
-        const {
-            receiverId,
-            message
-        } =
-            request.body;
-
-
         if (
-            !receiverId ||
-            !message
+            usernameElement
         ) {
 
-            return response
-                .status(400)
-                .json({
-                    message:
-                        "Message cannot be empty."
-                });
+            usernameElement.textContent =
+                `@${user.username}`;
 
         }
 
 
-        db.run(
-            `
-            INSERT INTO messages
-            (
-                senderId,
-                receiverId,
-                message
-            )
-            VALUES
-            (?, ?, ?)
-            `,
-            [
-                request.user.id,
-                receiverId,
-                message.trim()
-            ],
-            function(error) {
-
-                if (error) {
-
-                    return response
-                        .status(500)
-                        .json({
-                            message:
-                                "Unable to send message."
-                        });
-
-                }
-
-
-                response.json({
-
-                    message:
-                        "Message sent.",
-
-                    id:
-                        this.lastID
-
-                });
-
-            }
-        );
+        loadContacts();
 
     }
-);
+
+}
 
 
-/* GET MESSAGES */
-
-app.get(
-    "/api/messages/:userId",
-    authenticate,
-    function(
-        request,
-        response
-    ) {
-
-        const otherUser =
-            request.params.userId;
+/* ================================
+   ADD FRIEND BUTTON
+================================ */
 
 
-        db.all(
-            `
-            SELECT
-                id,
-                senderId,
-                receiverId,
-                message,
-                createdAt
-            FROM messages
+const addFriendBtn =
+    document.getElementById(
+        "addFriendBtn"
+    );
 
-            WHERE
-            (
-                senderId = ?
-                AND
-                receiverId = ?
-            )
 
-            OR
+if (addFriendBtn) {
 
-            (
-                senderId = ?
-                AND
-                receiverId = ?
-            )
+    addFriendBtn.addEventListener(
+        "click",
+        function() {
 
-            ORDER BY
-            createdAt ASC
-            `,
-            [
-                request.user.id,
-                otherUser,
-                otherUser,
-                request.user.id
-            ],
-            function(
-                error,
-                messages
+            const box =
+                document.getElementById(
+                    "addFriendBox"
+                );
+
+
+            if (
+                box.style.display ===
+                "none" ||
+                box.style.display ===
+                ""
             ) {
 
-                if (error) {
+                box.style.display =
+                    "block";
 
-                    return response
-                        .status(500)
-                        .json({
-                            message:
-                                "Unable to load messages."
-                        });
+            } else {
+
+                box.style.display =
+                    "none";
+
+            }
+
+        }
+    );
+
+}
+
+
+/* ================================
+   ADD FRIEND
+================================ */
+
+
+const addFriendSubmit =
+    document.getElementById(
+        "addFriendSubmit"
+    );
+
+
+if (addFriendSubmit) {
+
+    addFriendSubmit.addEventListener(
+        "click",
+        addFriend
+    );
+
+}
+
+
+async function addFriend() {
+
+    const phoneInput =
+        document.getElementById(
+            "friendPhone"
+        );
+
+
+    const message =
+        document.getElementById(
+            "addFriendMessage"
+        );
+
+
+    const phone =
+        phoneInput.value.trim();
+
+
+    if (!phone) {
+
+        message.textContent =
+            "Enter your friend's phone number.";
+
+        return;
+
+    }
+
+
+    addFriendSubmit.disabled =
+        true;
+
+
+    addFriendSubmit.textContent =
+        "Searching...";
+
+
+    message.textContent =
+        "";
+
+
+    try {
+
+        const user =
+            await apiRequest(
+                "/api/users/find",
+                {
+
+                    method:
+                        "POST",
+
+                    body:
+                        JSON.stringify({
+
+                            phoneNumber:
+                                phone
+
+                        })
 
                 }
+            );
 
 
-                response.json(
-                    messages
+        message.textContent =
+            "Friend added successfully!";
+
+
+        phoneInput.value =
+            "";
+
+
+        await loadContacts();
+
+
+        setTimeout(
+            function() {
+
+                message.textContent =
+                    "";
+
+            },
+            2000
+        );
+
+
+        openChat(
+            user
+        );
+
+
+    } catch (error) {
+
+        console.error(
+            "Add friend error:",
+            error
+        );
+
+
+        message.textContent =
+            error.message;
+
+    }
+
+
+    addFriendSubmit.disabled =
+        false;
+
+
+    addFriendSubmit.textContent =
+        "Add";
+
+}
+
+
+/* ================================
+   LOAD CONTACTS
+================================ */
+
+
+async function loadContacts() {
+
+    const list =
+        document.getElementById(
+            "contactsList"
+        );
+
+
+    if (!list) {
+
+        return;
+
+    }
+
+
+    try {
+
+        const contacts =
+            await apiRequest(
+                "/api/contacts"
+            );
+
+
+        list.innerHTML =
+            "";
+
+
+        if (
+            !contacts ||
+            contacts.length ===
+            0
+        ) {
+
+            list.innerHTML =
+
+                `<p class="empty-contacts">
+
+                    No chats yet.
+                    Tap + to add a friend.
+
+                </p>`;
+
+            return;
+
+        }
+
+
+        contacts.forEach(
+            function(user) {
+
+                const button =
+                    document.createElement(
+                        "button"
+                    );
+
+
+                button.className =
+                    "contact-item";
+
+
+                button.innerHTML =
+
+                    `<strong>
+
+                        ${escapeHtml(
+                            user.fullName
+                        )}
+
+                    </strong>
+
+                    <span>
+
+                        @${escapeHtml(
+                            user.username
+                        )}
+
+                    </span>`;
+
+
+                button.addEventListener(
+                    "click",
+                    function() {
+
+                        openChat(
+                            user
+                        );
+
+                    }
+                );
+
+
+                list.appendChild(
+                    button
                 );
 
             }
         );
 
-    }
-);
 
+    } catch (error) {
 
-/* START SERVER */
-
-app.listen(
-    PORT,
-    function() {
-
-        console.log(
-            `Kollins Chat backend running on port ${PORT}`
+        console.error(
+            "Contacts error:",
+            error
         );
 
     }
-);
+
+}
+
+
+/* ================================
+   OPEN CHAT
+================================ */
+
+
+let currentChatUser =
+    null;
+
+
+function openChat(
+    user
+) {
+
+    currentChatUser =
+        user;
+
+
+    const emptyChat =
+        document.getElementById(
+            "emptyChat"
+        );
+
+
+    const activeChat =
+        document.getElementById(
+            "activeChat"
+        );
+
+
+    if (
+        emptyChat
+    ) {
+
+        emptyChat.style.display =
+            "none";
+
+    }
+
+
+    if (
+        activeChat
+    ) {
+
+        activeChat.style.display =
+            "flex";
+
+    }
+
+
+    const name =
+        document.getElementById(
+            "chatUserName"
+        );
+
+
+    const username =
+        document.getElementById(
+            "chatUserUsername"
+        );
+
+
+    if (
+        name
+    ) {
+
+        name.textContent =
+            user.fullName;
+
+    }
+
+
+    if (
+        username
+    ) {
+
+        username.textContent =
+            `@${user.username}`;
+
+    }
+
+
+    loadMessages();
+
+}
+
+
+/* ================================
+   LOAD MESSAGES
+================================ */
+
+
+async function loadMessages() {
+
+    if (
+        !currentChatUser
+    ) {
+
+        return;
+
+    }
+
+
+    const container =
+        document.getElementById(
+            "messagesContainer"
+        );
+
+
+    if (!container) {
+
+        return;
+
+    }
+
+
+    try {
+
+        const messages =
+            await apiRequest(
+
+                `/api/messages/${currentChatUser._id}`
+
+            );
+
+
+        container.innerHTML =
+            "";
+
+
+        const currentUser =
+            getUser();
+
+
+        messages.forEach(
+            function(message) {
+
+                const div =
+                    document.createElement(
+                        "div"
+                    );
+
+
+                const mine =
+                    String(
+                        message.senderId
+                    ) ===
+                    String(
+                        currentUser._id
+                    );
+
+
+                div.className =
+                    mine
+                        ? "message sent"
+                        : "message received";
+
+
+                div.innerHTML =
+
+                    `<div class="message-bubble">
+
+                        ${escapeHtml(
+                            message.message
+                        )}
+
+                        <small>
+
+                            ${new Date(
+                                message.createdAt
+                            ).toLocaleTimeString()}
+
+                        </small>
+
+                    </div>`;
+
+
+                container.appendChild(
+                    div
+                );
+
+            }
+        );
+
+
+        container.scrollTop =
+            container.scrollHeight;
+
+
+    } catch (error) {
+
+        console.error(
+            "Messages error:",
+            error
+        );
+
+    }
+
+}
+
+
+/* ================================
+   SEND MESSAGE
+================================ */
+
+
+const messageForm =
+    document.getElementById(
+        "messageForm"
+    );
+
+
+if (messageForm) {
+
+    messageForm.addEventListener(
+        "submit",
+        async function(event) {
+
+            event.preventDefault();
+
+
+            if (
+                !currentChatUser
+            ) {
+
+                return;
+
+            }
+
+
+            const input =
+                document.getElementById(
+                    "messageInput"
+                );
+
+
+            const message =
+                input.value.trim();
+
+
+            if (!message) {
+
+                return;
+
+            }
+
+
+            const button =
+                messageForm.querySelector(
+                    "button[type='submit']"
+                );
+
+
+            button.disabled =
+                true;
+
+
+            try {
+
+                await apiRequest(
+                    "/api/messages",
+                    {
+
+                        method:
+                            "POST",
+
+                        body:
+                            JSON.stringify({
+
+                                receiverId:
+                                    currentChatUser._id,
+
+                                message:
+                                    message
+
+                            })
+
+                    }
+                );
+
+
+                input.value =
+                    "";
+
+
+                await loadMessages();
+
+
+            } catch (error) {
+
+                console.error(
+                    "Send message error:",
+                    error
+                );
+
+
+                alert(
+                    error.message
+                );
+
+            }
+
+
+            button.disabled =
+                false;
+
+        }
+    );
+
+}
+
+
+/* ================================
+   LOGOUT
+================================ */
+
+
+const logoutBtn =
+    document.getElementById(
+        "logoutBtn"
+    );
+
+
+if (logoutBtn) {
+
+    logoutBtn.addEventListener(
+        "click",
+        function() {
+
+            localStorage.removeItem(
+                "kollinsToken"
+            );
+
+
+            localStorage.removeItem(
+                "kollinsUser"
+            );
+
+
+            window.location.replace(
+                "login.html"
+            );
+
+        }
+    );
+
+}
+
+
+/* ================================
+   SECURITY
+================================ */
+
+
+function escapeHtml(
+    text
+) {
+
+    const div =
+        document.createElement(
+            "div"
+        );
+
+
+    div.textContent =
+        text;
+
+
+    return div.innerHTML;
+
+}
