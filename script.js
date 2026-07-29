@@ -6,7 +6,6 @@ const API_URL =
    STORAGE
 ================================ */
 
-
 function getToken() {
 
     return localStorage.getItem(
@@ -37,7 +36,7 @@ function getUser() {
             savedUser
         );
 
-    } catch {
+    } catch (error) {
 
         return null;
 
@@ -49,7 +48,6 @@ function getUser() {
 /* ================================
    API REQUEST
 ================================ */
-
 
 async function apiRequest(
     endpoint,
@@ -86,7 +84,7 @@ async function apiRequest(
         );
 
 
-    let data;
+    let data = {};
 
 
     try {
@@ -94,7 +92,7 @@ async function apiRequest(
         data =
             await response.json();
 
-    } catch {
+    } catch (error) {
 
         data = {};
 
@@ -106,7 +104,7 @@ async function apiRequest(
         throw new Error(
 
             data.message ||
-            "Something went wrong. Please try again."
+            `Request failed: ${response.status}`
 
         );
 
@@ -121,7 +119,6 @@ async function apiRequest(
 /* ================================
    REGISTER
 ================================ */
-
 
 const registerForm =
     document.getElementById(
@@ -187,6 +184,12 @@ if (registerForm) {
                 );
 
 
+            const button =
+                registerForm.querySelector(
+                    "button[type='submit']"
+                );
+
+
             if (
                 !fullName ||
                 !username ||
@@ -214,12 +217,6 @@ if (registerForm) {
                 return;
 
             }
-
-
-            const button =
-                registerForm.querySelector(
-                    "button[type='submit']"
-                );
 
 
             button.disabled =
@@ -261,14 +258,6 @@ if (registerForm) {
                     );
 
 
-                /*
-                   ACCOUNT CREATED SUCCESSFULLY
-
-                   Clear any old login session
-                   so the user must log in.
-                */
-
-
                 localStorage.removeItem(
                     "kollinsToken"
                 );
@@ -281,14 +270,6 @@ if (registerForm) {
 
                 message.textContent =
                     "Account created successfully!";
-
-
-                /*
-                   GO TO LOGIN PAGE
-
-                   User will now enter their
-                   username/phone and password.
-                */
 
 
                 setTimeout(
@@ -333,7 +314,6 @@ if (registerForm) {
 /* ================================
    LOGIN
 ================================ */
-
 
 const loginForm =
     document.getElementById(
@@ -414,11 +394,6 @@ if (loginForm) {
                     );
 
 
-                /*
-                   SAVE LOGIN TOKEN
-                */
-
-
                 if (
                     data.token
                 ) {
@@ -429,11 +404,6 @@ if (loginForm) {
                     );
 
                 }
-
-
-                /*
-                   SAVE USER
-                */
 
 
                 if (
@@ -451,13 +421,6 @@ if (loginForm) {
                     );
 
                 }
-
-
-                /*
-                   LOGIN SUCCESSFUL
-
-                   GO DIRECTLY TO CHAT
-                */
 
 
                 window.location.replace(
@@ -493,9 +456,8 @@ if (loginForm) {
 
 
 /* ================================
-   CHAT PAGE PROTECTION
+   CHAT PAGE
 ================================ */
-
 
 const chatPage =
     document.querySelector(
@@ -551,7 +513,6 @@ if (chatPage) {
    ADD FRIEND BUTTON
 ================================ */
 
-
 const addFriendBtn =
     document.getElementById(
         "addFriendBtn"
@@ -597,7 +558,6 @@ if (addFriendBtn) {
    ADD FRIEND
 ================================ */
 
-
 const addFriendSubmit =
     document.getElementById(
         "addFriendSubmit"
@@ -642,12 +602,26 @@ async function addFriend() {
     }
 
 
+    const currentUser =
+        getUser();
+
+
+    if (!currentUser) {
+
+        message.textContent =
+            "Please log in again.";
+
+        return;
+
+    }
+
+
     addFriendSubmit.disabled =
         true;
 
 
     addFriendSubmit.textContent =
-        "Searching...";
+        "Finding...";
 
 
     message.textContent =
@@ -655,6 +629,10 @@ async function addFriend() {
 
 
     try {
+
+        /*
+           FIND USER BY PHONE NUMBER
+        */
 
         const user =
             await apiRequest(
@@ -676,30 +654,109 @@ async function addFriend() {
             );
 
 
+        if (!user) {
+
+            throw new Error(
+                "User was not found."
+            );
+
+        }
+
+
+        /*
+           MAKE SURE THE USER HAS AN ID
+
+           The backend may return either
+           _id or id.
+        */
+
+        const userId =
+            user._id ||
+            user.id;
+
+
+        if (!userId) {
+
+            throw new Error(
+                "User ID was not returned by the server."
+            );
+
+        }
+
+
+        /*
+           CREATE A STANDARD USER OBJECT
+
+           This prevents ID mismatch problems.
+        */
+
+        const friend = {
+
+            _id:
+                userId,
+
+            id:
+                userId,
+
+            fullName:
+                user.fullName,
+
+            username:
+                user.username,
+
+            phoneNumber:
+                user.phoneNumber
+
+        };
+
+
+        /*
+           SAVE FRIEND LOCALLY
+
+           This allows the friend to appear
+           immediately in the Chats list.
+        */
+
+        saveContact(
+            friend
+        );
+
+
+        /*
+           UPDATE CHAT LIST
+        */
+
+        await loadContacts();
+
+
+        /*
+           SHOW SUCCESS
+        */
+
         message.textContent =
-            "Friend added successfully!";
+            "Friend found successfully!";
 
 
         phoneInput.value =
             "";
 
 
-        await loadContacts();
+        /*
+           CLOSE ADD FRIEND BOX
+        */
+
+        document.getElementById(
+            "addFriendBox"
+        ).style.display =
+            "none";
 
 
-        setTimeout(
-            function() {
-
-                message.textContent =
-                    "";
-
-            },
-            2000
-        );
-
+        /*
+           OPEN CHAT DIRECTLY
+        */
 
         openChat(
-            user
+            friend
         );
 
 
@@ -712,7 +769,8 @@ async function addFriend() {
 
 
         message.textContent =
-            error.message;
+            error.message ||
+            "Something went wrong. Please try again.";
 
     }
 
@@ -728,9 +786,120 @@ async function addFriend() {
 
 
 /* ================================
-   LOAD CONTACTS
+   SAVE CONTACT LOCALLY
 ================================ */
 
+function saveContact(
+    friend
+) {
+
+    const savedContacts =
+        localStorage.getItem(
+            "kollinsContacts"
+        );
+
+
+    let contacts = [];
+
+
+    try {
+
+        contacts =
+            savedContacts
+                ? JSON.parse(
+                    savedContacts
+                )
+                : [];
+
+    } catch (error) {
+
+        contacts = [];
+
+    }
+
+
+    const friendId =
+        String(
+            friend._id ||
+            friend.id
+        );
+
+
+    const alreadyExists =
+        contacts.some(
+            function(contact) {
+
+                return String(
+                    contact._id ||
+                    contact.id
+                ) ===
+                friendId;
+
+            }
+        );
+
+
+    if (
+        !alreadyExists
+    ) {
+
+        contacts.push(
+            friend
+        );
+
+    }
+
+
+    localStorage.setItem(
+
+        "kollinsContacts",
+
+        JSON.stringify(
+            contacts
+        )
+
+    );
+
+}
+
+
+/* ================================
+   GET SAVED CONTACTS
+================================ */
+
+function getSavedContacts() {
+
+    const savedContacts =
+        localStorage.getItem(
+            "kollinsContacts"
+        );
+
+
+    if (!savedContacts) {
+
+        return [];
+
+    }
+
+
+    try {
+
+        return JSON.parse(
+            savedContacts
+        );
+
+    } catch (error) {
+
+        return [];
+
+    }
+
+}
+
+
+/* ================================
+   LOAD CONTACTS
+================================ */
 
 async function loadContacts() {
 
@@ -747,98 +916,191 @@ async function loadContacts() {
     }
 
 
+    /*
+       LOAD LOCAL CONTACTS FIRST
+
+       This means the friend appears
+       immediately after being added.
+    */
+
+    let contacts =
+        getSavedContacts();
+
+
+    /*
+       TRY TO LOAD CONTACTS FROM SERVER
+
+       If the backend supports the
+       /api/contacts endpoint, use it.
+    */
+
     try {
 
-        const contacts =
+        const serverContacts =
             await apiRequest(
                 "/api/contacts"
             );
 
 
-        list.innerHTML =
-            "";
-
-
         if (
-            !contacts ||
-            contacts.length ===
-            0
+            Array.isArray(
+                serverContacts
+            )
         ) {
 
-            list.innerHTML =
+            serverContacts.forEach(
+                function(serverUser) {
 
-                `<p class="empty-contacts">
+                    const serverId =
+                        String(
+                            serverUser._id ||
+                            serverUser.id
+                        );
 
-                    No chats yet.
-                    Tap + to add a friend.
 
-                </p>`;
+                    const exists =
+                        contacts.some(
+                            function(contact) {
 
-            return;
+                                return String(
+                                    contact._id ||
+                                    contact.id
+                                ) ===
+                                serverId;
+
+                            }
+                        );
+
+
+                    if (
+                        !exists
+                    ) {
+
+                        contacts.push({
+
+                            _id:
+                                serverUser._id ||
+                                serverUser.id,
+
+                            id:
+                                serverUser._id ||
+                                serverUser.id,
+
+                            fullName:
+                                serverUser.fullName,
+
+                            username:
+                                serverUser.username,
+
+                            phoneNumber:
+                                serverUser.phoneNumber
+
+                        });
+
+                    }
+
+                }
+            );
 
         }
 
 
-        contacts.forEach(
-            function(user) {
+        localStorage.setItem(
 
-                const button =
-                    document.createElement(
-                        "button"
-                    );
+            "kollinsContacts",
 
+            JSON.stringify(
+                contacts
+            )
 
-                button.className =
-                    "contact-item";
-
-
-                button.innerHTML =
-
-                    `<strong>
-
-                        ${escapeHtml(
-                            user.fullName
-                        )}
-
-                    </strong>
-
-                    <span>
-
-                        @${escapeHtml(
-                            user.username
-                        )}
-
-                    </span>`;
-
-
-                button.addEventListener(
-                    "click",
-                    function() {
-
-                        openChat(
-                            user
-                        );
-
-                    }
-                );
-
-
-                list.appendChild(
-                    button
-                );
-
-            }
         );
 
 
     } catch (error) {
 
-        console.error(
-            "Contacts error:",
-            error
+        console.warn(
+            "Could not load server contacts:",
+            error.message
         );
 
     }
+
+
+    list.innerHTML =
+        "";
+
+
+    if (
+        contacts.length ===
+        0
+    ) {
+
+        list.innerHTML =
+
+            `<p class="empty-contacts">
+
+                No chats yet.
+                Tap + to add a friend.
+
+            </p>`;
+
+        return;
+
+    }
+
+
+    contacts.forEach(
+        function(user) {
+
+            const button =
+                document.createElement(
+                    "button"
+                );
+
+
+            button.className =
+                "contact-item";
+
+
+            button.innerHTML =
+
+                `<strong>
+
+                    ${escapeHtml(
+                        user.fullName ||
+                        "User"
+                    )}
+
+                </strong>
+
+                <span>
+
+                    @${escapeHtml(
+                        user.username ||
+                        ""
+                    )}
+
+                </span>`;
+
+
+            button.addEventListener(
+                "click",
+                function() {
+
+                    openChat(
+                        user
+                    );
+
+                }
+            );
+
+
+            list.appendChild(
+                button
+            );
+
+        }
+    );
 
 }
 
@@ -846,7 +1108,6 @@ async function loadContacts() {
 /* ================================
    OPEN CHAT
 ================================ */
-
 
 let currentChatUser =
     null;
@@ -856,8 +1117,40 @@ function openChat(
     user
 ) {
 
-    currentChatUser =
-        user;
+    const userId =
+        user._id ||
+        user.id;
+
+
+    if (!userId) {
+
+        alert(
+            "This user does not have a valid ID."
+        );
+
+        return;
+
+    }
+
+
+    currentChatUser = {
+
+        _id:
+            userId,
+
+        id:
+            userId,
+
+        fullName:
+            user.fullName,
+
+        username:
+            user.username,
+
+        phoneNumber:
+            user.phoneNumber
+
+    };
 
 
     const emptyChat =
@@ -909,7 +1202,7 @@ function openChat(
     ) {
 
         name.textContent =
-            user.fullName;
+            currentChatUser.fullName;
 
     }
 
@@ -919,7 +1212,7 @@ function openChat(
     ) {
 
         username.textContent =
-            `@${user.username}`;
+            `@${currentChatUser.username}`;
 
     }
 
@@ -932,7 +1225,6 @@ function openChat(
 /* ================================
    LOAD MESSAGES
 ================================ */
-
 
 async function loadMessages() {
 
@@ -958,12 +1250,17 @@ async function loadMessages() {
     }
 
 
+    const userId =
+        currentChatUser._id ||
+        currentChatUser.id;
+
+
     try {
 
         const messages =
             await apiRequest(
 
-                `/api/messages/${currentChatUser._id}`
+                `/api/messages/${userId}`
 
             );
 
@@ -985,12 +1282,23 @@ async function loadMessages() {
                     );
 
 
+                const senderId =
+                    message.sender?._id ||
+                    message.sender?.id ||
+                    message.senderId;
+
+
+                const currentUserId =
+                    currentUser?._id ||
+                    currentUser?.id;
+
+
                 const mine =
                     String(
-                        message.senderId
+                        senderId
                     ) ===
                     String(
-                        currentUser._id
+                        currentUserId
                     );
 
 
@@ -1047,7 +1355,6 @@ async function loadMessages() {
    SEND MESSAGE
 ================================ */
 
-
 const messageForm =
     document.getElementById(
         "messageForm"
@@ -1066,6 +1373,10 @@ if (messageForm) {
             if (
                 !currentChatUser
             ) {
+
+                alert(
+                    "Please select a chat first."
+                );
 
                 return;
 
@@ -1095,6 +1406,11 @@ if (messageForm) {
                 );
 
 
+            const receiverId =
+                currentChatUser._id ||
+                currentChatUser.id;
+
+
             button.disabled =
                 true;
 
@@ -1111,11 +1427,9 @@ if (messageForm) {
                         body:
                             JSON.stringify({
 
-                                receiverId:
-                                    currentChatUser._id,
+                                receiverId,
 
-                                message:
-                                    message
+                                message
 
                             })
 
@@ -1158,7 +1472,6 @@ if (messageForm) {
    LOGOUT
 ================================ */
 
-
 const logoutBtn =
     document.getElementById(
         "logoutBtn"
@@ -1194,7 +1507,6 @@ if (logoutBtn) {
 /* ================================
    SECURITY
 ================================ */
-
 
 function escapeHtml(
     text
