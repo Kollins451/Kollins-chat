@@ -262,51 +262,44 @@ if (registerForm) {
 
 
                 /*
-                   SAVE LOGIN INFORMATION
+                   ACCOUNT CREATED SUCCESSFULLY
+
+                   Clear any old login session
+                   so the user must log in.
                 */
 
 
-                if (
-                    data.token
-                ) {
-
-                    localStorage.setItem(
-                        "kollinsToken",
-                        data.token
-                    );
-
-                }
+                localStorage.removeItem(
+                    "kollinsToken"
+                );
 
 
-                if (
-                    data.user
-                ) {
-
-                    localStorage.setItem(
-
-                        "kollinsUser",
-
-                        JSON.stringify(
-                            data.user
-                        )
-
-                    );
-
-                }
-
-
-                /*
-                   ACCOUNT CREATED
-                   GO DIRECTLY TO CHAT
-                */
+                localStorage.removeItem(
+                    "kollinsUser"
+                );
 
 
                 message.textContent =
                     "Account created successfully!";
 
 
-                window.location.replace(
-                    "chat.html"
+                /*
+                   GO TO LOGIN PAGE
+
+                   User will now enter their
+                   username/phone and password.
+                */
+
+
+                setTimeout(
+                    function() {
+
+                        window.location.replace(
+                            "login.html"
+                        );
+
+                    },
+                    500
                 );
 
 
@@ -422,7 +415,7 @@ if (loginForm) {
 
 
                 /*
-                   SAVE LOGIN INFORMATION
+                   SAVE LOGIN TOKEN
                 */
 
 
@@ -436,6 +429,11 @@ if (loginForm) {
                     );
 
                 }
+
+
+                /*
+                   SAVE USER
+                */
 
 
                 if (
@@ -456,6 +454,8 @@ if (loginForm) {
 
 
                 /*
+                   LOGIN SUCCESSFUL
+
                    GO DIRECTLY TO CHAT
                 */
 
