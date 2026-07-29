@@ -1,0 +1,12 @@
+{
+"name": "Our Chat App",
+"short_name": "Chat App",
+"description": "A modern messaging application",
+"start_url": "./index.html",
+"display": "standalone",
+"background_color": "#ffffff",
+"theme_color": "#075e54",
+"orientation": "portrait-primary",
+"icons": []
+}
+

@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<meta name="theme-color" content="#075e54">
+<meta name="description" content="A simple modern messaging application">
+
+<title>Our Chat App</title>
+
+<link rel="stylesheet" href="style.css">
+<link rel="manifest" href="manifest.json">
+</head>
+
+<body>
+
+<div class="app">
+
+<!-- Sidebar -->
+<aside class="sidebar">
+
+<header class="sidebar-header">
+<h1>Chats</h1>
+
+<button id="newChatBtn" class="icon-btn" title="New Chat">
++
+</button>
+</header>
+
+<!-- Search -->
+<div class="search-box">
+<input
+type="text"
+id="searchInput"
+placeholder="Search chats..."
+>
+</div>
+
+<!-- Chat List -->
+<div id="chatList" class="chat-list">
+
+<div
+class="chat-item active"
+data-name="Demo User"
+data-username="@demo"
+>
+<div class="avatar">D</div>
+
+<div class="chat-info">
+<div class="chat-top">
+<strong>Demo User</strong>
+<span>10:30</span>
+</div>
+
+<p>Welcome to Our Chat App!</p>
+</div>
+</div>
+
+</div>
+
+</aside>
+
+
+<!-- Main Chat Area -->
+<main class="chat-area">
+
+<!-- Chat Header -->
+<header class="chat-header">
+
+<div class="user-details">
+
+<div class="avatar">D</div>
+
+<div>
+<h2 id="chatUserName">Demo User</h2>
+<p id="chatUserStatus">Online</p>
+</div>
+
+</div>
+
+<div class="chat-actions">
+<button class="icon-btn" title="Search">⌕</button>
+<button class="icon-btn" title="More">⋮</button>
+</div>
+
+</header>
+
+
+<!-- Messages -->
+<section id="messages" class="messages">
+
+<div class="message received">
+<p>Hello! 👋</p>
+<span>10:29</span>
+</div>
+
+<div class="message received">
+<p>Welcome to Our Chat App!</p>
+<span>10:30</span>
+</div>
+
+</section>
+
+
+<!-- Message Input -->
+<footer class="message-input-area">
+
+<button id="emojiBtn" class="input-btn">
+😊
+</button>
+
+<input
+type="text"
+id="messageInput"
+placeholder="Type a message..."
+autocomplete="off"
+>
+
+<button id="sendBtn" class="send-btn">
+➤
+</button>
+
+</footer>
+
+</main>
+
+</div>
+
+
+<!-- New Chat Modal -->
+<div id="newChatModal" class="modal hidden">
+
+<div class="modal-content">
+
+<button id="closeModalBtn" class="close-btn">
+×
+</button>
+
+<h2>Start a New Chat</h2>
+
+<p>Enter a username to find a user.</p>
+
+<input
+type="text"
+id="usernameInput"
+placeholder="@username"
+>
+
+<button id="startChatBtn" class="primary-btn">
+Find User
+</button>
+
+<p id="userResult" class="user-result"></p>
+
+</div>
+
+</div>
+
+
+<script src="script.js"></script>
+
+</body>
+</html>
